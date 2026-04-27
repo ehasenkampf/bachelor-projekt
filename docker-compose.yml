@@ -25,14 +25,24 @@ services:
     restart: always
     networks:
       - backend-net
+    volumes:
+      - n8n-data:/home/node/.n8n
     environment:
-      - N8N_HOST=bachelor-projekt.de
+      - N8N_HOST=n8n.bachelor-projekt.de
       - N8N_PORT=5678
       - N8N_PROTOCOL=https
-      - N8N_EDITOR_BASE_URL=https://bachelor-projekt.de/n8n/
-      - WEBHOOK_URL=https://bachelor-projekt.de/n8n/
+      - N8N_EDITOR_BASE_URL=https://n8n.bachelor-projekt.de/
+      - WEBHOOK_URL=https://n8n.bachelor-projekt.de/
       - N8N_SECURE_COOKIE=true
       - N8N_PROXY_HOPS=1
+      - N8N_EMAIL_MODE=smtp
+      - N8N_SMTP_HOST=smtp.gmail.com
+      - N8N_SMTP_PORT=587
+      - N8N_SMTP_USER=${SMTP_USER}
+      - N8N_SMTP_PASS=${SMTP_PASS}
+      - N8N_SMTP_SSL=false
+      - N8N_SMTP_STARTTLS=true
+      - N8N_SMTP_SENDER=${SMTP_USER}
 
   db:
     image: postgres:13
@@ -71,4 +81,4 @@ networks:
 
 volumes:
   openproject-db-data:
-
+  n8n-data:
