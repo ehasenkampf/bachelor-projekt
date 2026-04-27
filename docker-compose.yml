@@ -1,0 +1,74 @@
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - frontend-net
+      - backend-net
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./index.html:/usr/share/nginx/html/index.html
+      - ./assets:/usr/share/nginx/html/assets
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    depends_on:
+      - n8n
+      - openproject
+
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    restart: always
+    networks:
+      - backend-net
+    environment:
+      - N8N_HOST=bachelor-projekt.de
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - N8N_EDITOR_BASE_URL=https://bachelor-projekt.de/n8n/
+      - WEBHOOK_URL=https://bachelor-projekt.de/n8n/
+      - N8N_SECURE_COOKIE=true
+      - N8N_PROXY_HOPS=1
+
+  db:
+    image: postgres:13
+    container_name: openproject-db
+    restart: always
+    environment:
+      POSTGRES_DB: openproject
+      POSTGRES_USER: openproject
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - openproject-db-data:/var/lib/postgresql/data
+    networks:
+      - backend-net
+
+  openproject:
+    image: openproject/openproject:13-slim
+    container_name: openproject
+    restart: always
+    depends_on:
+      - db
+    environment:
+      OPENPROJECT_SECRET_KEY_BASE: ${OPENPROJECT_SECRET_KEY_BASE}
+      OPENPROJECT_HOST__NAME: bachelor-projekt.de
+      OPENPROJECT_HTTPS: "true"
+      OPENPROJECT_RELATIVE_URL_ROOT: /openproject
+      RAILS_RELATIVE_URL_ROOT: /openproject
+      DATABASE_URL: postgres://openproject:${POSTGRES_PASSWORD}@db:5432/openproject
+    networks:
+      - backend-net
+
+networks:
+  frontend-net:
+    external: true
+  backend-net:
+    external: true
+
+volumes:
+  openproject-db-data:
+
